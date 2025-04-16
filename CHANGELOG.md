@@ -1,3 +1,13 @@
+## [1.11.0](https://github.com/tensorplex-labs/dojo/compare/v1.10.1...v1.11.0) (2025-04-16)
+
+### Features
+
+* Release v1.11.0 ([0c38d22](https://github.com/tensorplex-labs/dojo/commit/0c38d22d4ee8e0ef75b74051bc17fb5b7ba0bdda))
+
+### Bug Fixes
+
+* Updated trigger to build when new tags are created. ([#182](https://github.com/tensorplex-labs/dojo/issues/182)) ([1f01781](https://github.com/tensorplex-labs/dojo/commit/1f01781a46c499e05f6d007f2ed3c113bc019000))
+
 ## [1.10.1](https://github.com/tensorplex-labs/dojo/compare/v1.10.0...v1.10.1) (2025-04-10)
 
 ### Bug Fixes
