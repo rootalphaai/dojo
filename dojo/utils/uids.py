@@ -30,7 +30,7 @@ def is_miner(metagraph: bt.metagraph, uid: int) -> bool:
     return effective_stake < VALIDATOR_MIN_STAKE
 
 
-async def extract_miner_uids() -> List[int]:
+async def extract_miner_uids(last_block: int | None = None) -> List[int]:
     config = ObjectManager.get_config()
     subtensor = await get_async_subtensor()
     if not subtensor:
@@ -40,9 +40,11 @@ async def extract_miner_uids() -> List[int]:
         logger.error(message)
         raise FatalSubtensorConnectionError(message)
 
-    block = await subtensor.get_current_block()
-    subnet_metagraph = await subtensor.metagraph(config.netuid, block=block)
-    root_metagraph = await subtensor.metagraph(0, block=block)
+    if last_block is None:
+        last_block = await subtensor.get_current_block()
+
+    subnet_metagraph = await subtensor.metagraph(config.netuid, block=last_block)
+    root_metagraph = await subtensor.metagraph(0, block=last_block)
 
     from dojo import VALIDATOR_MIN_STAKE
 

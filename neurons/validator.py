@@ -573,7 +573,7 @@ class Validator:
         while True:
             await asyncio.sleep(dojo.VALIDATOR_HEARTBEAT)
             try:
-                all_miner_uids = await extract_miner_uids()
+                all_miner_uids = await extract_miner_uids(last_block=self.block)
                 logger.info(f"Sending heartbeats to {len(all_miner_uids)} miners")
 
                 axons: list[bt.AxonInfo] = [
