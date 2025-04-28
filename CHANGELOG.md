@@ -1,3 +1,9 @@
+## [1.11.1](https://github.com/tensorplex-labs/dojo/compare/v1.11.0...v1.11.1) (2025-04-28)
+
+### Bug Fixes
+
+* use latest block for extract miner uids ([3181898](https://github.com/tensorplex-labs/dojo/commit/318189806f29d8d47834709ecd37483be93faee1))
+
 ## [1.11.0](https://github.com/tensorplex-labs/dojo/compare/v1.10.1...v1.11.0) (2025-04-16)
 
 ### Features
