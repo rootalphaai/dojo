@@ -40,9 +40,11 @@ async def extract_miner_uids(last_block: int | None = None) -> List[int]:
         logger.error(message)
         raise FatalSubtensorConnectionError(message)
 
+    # reinit the subtensor substrate
+    await subtensor.substrate.initialize()
+
     if last_block is None:
         last_block = await subtensor.get_current_block()
-
     subnet_metagraph = await subtensor.metagraph(config.netuid, block=last_block)
     root_metagraph = await subtensor.metagraph(0, block=last_block)
 
@@ -64,6 +66,8 @@ async def extract_miner_uids(last_block: int | None = None) -> List[int]:
     # Process all tasks and collect results in order
     eff_stakes = await asyncio.gather(*tasks)
 
+    # Disconnect subtensor substrate.
+    await subtensor.substrate.close()
     # Return miner UIDs based on stakes
     return [
         uid
