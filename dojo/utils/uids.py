@@ -5,12 +5,10 @@ from collections import defaultdict
 from typing import List
 
 import bittensor as bt
-from bittensor.utils.btlogging import logging as logger
+from bittensor.core.async_subtensor import AsyncSubtensor
 
-from commons.exceptions import FatalSubtensorConnectionError
 from commons.objects import ObjectManager
 from commons.utils import aget_effective_stake, get_effective_stake, keccak256_hash
-from dojo.chain import get_async_subtensor
 
 
 def is_uid_available(metagraph: bt.metagraph, uid: int) -> bool:
@@ -32,45 +30,42 @@ def is_miner(metagraph: bt.metagraph, uid: int) -> bool:
 
 async def extract_miner_uids(last_block: int | None = None) -> List[int]:
     config = ObjectManager.get_config()
-    subtensor = await get_async_subtensor()
-    if not subtensor:
-        message = (
-            "Failed to connect to async subtensor during attempt to extract miner uids"
-        )
-        logger.error(message)
-        raise FatalSubtensorConnectionError(message)
 
-    if last_block is None:
-        last_block = await subtensor.get_current_block()
+    async with AsyncSubtensor(config=config) as subtensor:
+        if last_block is None:
+            last_block = await subtensor.get_current_block()
+        subnet_metagraph = await subtensor.metagraph(config.netuid, block=last_block)
+        root_metagraph = await subtensor.metagraph(0, block=last_block)
 
-    subnet_metagraph = await subtensor.metagraph(config.netuid, block=last_block)
-    root_metagraph = await subtensor.metagraph(0, block=last_block)
+        from dojo import VALIDATOR_MIN_STAKE
 
-    from dojo import VALIDATOR_MIN_STAKE
+        semaphore = asyncio.Semaphore(20)  # Allow 20 concurrent calls
 
-    semaphore = asyncio.Semaphore(20)  # Allow 20 concurrent calls
+        async def _semaphore_get_stake(hotkey):
+            async with semaphore:
+                return await aget_effective_stake(
+                    hotkey, root_metagraph, subnet_metagraph
+                )
 
-    async def _semaphore_get_stake(hotkey):
-        async with semaphore:
-            return await aget_effective_stake(hotkey, root_metagraph, subnet_metagraph)
+        # Create tasks for all hotkeys
+        num_neurons = int(subnet_metagraph.n.item())
+        tasks = [
+            asyncio.create_task(_semaphore_get_stake(subnet_metagraph.hotkeys[i]))
+            for i in range(num_neurons)
+        ]
 
-    # Create tasks for all hotkeys
-    num_neurons = int(subnet_metagraph.n.item())
-    tasks = [
-        asyncio.create_task(_semaphore_get_stake(subnet_metagraph.hotkeys[i]))
-        for i in range(num_neurons)
-    ]
+        # Process all tasks and collect results in order
+        eff_stakes = await asyncio.gather(*tasks)
 
-    # Process all tasks and collect results in order
-    eff_stakes = await asyncio.gather(*tasks)
+        # Return miner UIDs based on stakes
+        active_miner_uids = [
+            uid
+            for uid in range(num_neurons)
+            if subnet_metagraph.axons[uid].is_serving
+            and eff_stakes[uid] < VALIDATOR_MIN_STAKE
+        ]
 
-    # Return miner UIDs based on stakes
-    return [
-        uid
-        for uid in range(num_neurons)
-        if subnet_metagraph.axons[uid].is_serving
-        and eff_stakes[uid] < VALIDATOR_MIN_STAKE
-    ]
+    return active_miner_uids
 
 
 class MinerUidSelector:
