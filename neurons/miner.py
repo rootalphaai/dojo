@@ -9,12 +9,9 @@ import bittensor
 from bittensor.utils.networking import ip_to_int, ip_version
 from loguru import logger
 
-# from commons.exceptions import FatalSubtensorConnectionError
 from commons.human_feedback.dojo import DojoAPI
 from commons.objects import ObjectManager
 from commons.utils import aget_effective_stake, aobject, get_epoch_time
-
-#                            serve_axon)
 from dojo import MINER_STATUS, VALIDATOR_MIN_STAKE
 from dojo.chain import parse_block_headers
 from dojo.kami import AxonInfo, Kami, ServeAxonPayload, SubnetMetagraph
@@ -177,18 +174,18 @@ class Miner(aobject):
         # If someone intentionally stops the miner, it'll safely terminate operations.
         except KeyboardInterrupt:
             logger.success("Miner killed by keyboard interrupt.")
-            self._cleanup()
+            await self._cleanup()
             exit()
 
         # In case of unforeseen errors, the miner will log the error and continue operations.
         except Exception:
             logger.error(traceback.format_exc())
         finally:
-            self._cleanup()
+            await self._cleanup()
 
-    def _cleanup(self):
+    async def _cleanup(self):
         self.axon.stop()
-        self.kami.close()
+        await self.kami.close()
 
     async def ack_heartbeat(self, synapse: Heartbeat) -> Heartbeat:
         caller_hotkey = (
@@ -465,7 +462,7 @@ class Miner(aobject):
                 f"Wallet: {self.wallet} is not registered on netuid {self.config.netuid}."
                 f" Please register the hotkey using `btcli s register` before trying again"
             )
-            self._cleanup()
+            await self._cleanup()
             exit(1)
 
     def should_sync_metagraph(self):
