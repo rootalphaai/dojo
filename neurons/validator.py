@@ -41,6 +41,7 @@ from commons.utils import (
     get_new_uuid,
     set_expire_time,
 )
+from database.client import connect_db
 from dojo import get_latest_git_tag, get_latest_remote_tag, get_spec_version
 from dojo.kami import Kami, SetWeightsPayload, SubnetMetagraph
 from dojo.protocol import (
@@ -97,6 +98,8 @@ class Validator(aobject):
     kami: Kami
 
     async def __init__(self):
+        await connect_db()
+
         self.MAX_BLOCK_CHECK_ATTEMPTS = 3
         self.QUALITY_WEIGHT = 0.8
         self._last_block = None
