@@ -137,19 +137,15 @@ class Validator(aobject):
         )
 
         await self.check_registered()
-
-        # Run score migration before loading state
-        migration_success = await ScoreStorage.migrate_from_db()
-        if not migration_success:
-            logger.error(
-                "Score migration failed - cannot continue without valid scores"
-            )
-            raise RuntimeError("Score migration failed - validator cannot start")
-
         await self.load_state()
 
     async def send_scores(self, synapse: ScoringResult, hotkeys: List[str]):
         """Send consensus score back to miners who participated in the request."""
+        for _, responses in synapse.hotkey_to_completion_responses.items():
+            for response in responses:
+                # Set completion to None to reduce the size of the synapse
+                response.completion = None
+
         miners_uids = await self.get_active_miner_uids()
         metagraph_axons = await self._retrieve_axons(miners_uids)
         axons = [axon for axon in metagraph_axons if axon.hotkey in hotkeys]
