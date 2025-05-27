@@ -140,3 +140,6 @@ watchtower:
 
 watchtower-down:
 	docker compose -f docker-compose.shared.yaml down watchtower
+
+back-up-scores:
+	docker cp validator:/app/scores/miner_scores.pt scores/miner_scores.pt.bak
