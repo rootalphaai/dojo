@@ -48,6 +48,7 @@ miner-pull:
 	docker compose -f docker-compose.miner.yaml pull --include-deps
 
 validator-down:
+	docker cp validator:/app/scores/miner_scores.pt ./scores/miner_scores.pt.bak
 	docker compose -f docker-compose.validator.yaml down
 
 miner-down:
@@ -61,6 +62,7 @@ miner:
 	docker compose -f docker-compose.miner.yaml up -d miner
 
 validator:
+	docker cp validator:/app/scores/miner_scores.pt ./scores/miner_scores.pt.bak
 	docker compose -f docker-compose.validator.yaml up -d validator
 
 validator-up-deps:
