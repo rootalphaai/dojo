@@ -230,7 +230,9 @@ class Scoring:
             cosine_similarity_scores,
             normalised_cosine_similarity_scores,
             cubic_reward_scores,
-        ) = _reward_cubic(miner_outputs, ground_truth_arr, 0.006, 7, 2, visualize=True)
+        ) = _reward_cubic(
+            miner_outputs_normalised, ground_truth_arr, 0.006, 7, 2, visualize=True
+        )
         logger.debug(f"scoring: cubic reward\n{cubic_reward}")
 
         # normalize to ensure sum is 1
