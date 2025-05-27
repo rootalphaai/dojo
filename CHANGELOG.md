@@ -1,3 +1,10 @@
+## [1.12.3](https://github.com/tensorplex-labs/dojo/compare/v1.12.2...v1.12.3) (2025-05-27)
+
+### Bug Fixes
+
+* connect db on init ([2375a02](https://github.com/tensorplex-labs/dojo/commit/2375a0235c047dee3a5044bd8d13e29c55d89c38)), closes [#198](https://github.com/tensorplex-labs/dojo/issues/198)
+* connect db on init ([af6437f](https://github.com/tensorplex-labs/dojo/commit/af6437ffeccf0b12c45fd14d3ecc34862930cfe7))
+
 ## [1.12.2](https://github.com/tensorplex-labs/dojo/compare/v1.12.1...v1.12.2) (2025-05-27)
 
 ### Bug Fixes
