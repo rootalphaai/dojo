@@ -105,6 +105,7 @@ services:
       - prisma-binary:/root/prisma-python
       - prisma-pip-cache:/root/.cache/pip
       - prisma-client:/app/database/prisma
+      - scores:/app/scores
     command: ["validator"]
     networks:
       - dojo-validator
@@ -119,6 +120,7 @@ services:
         condition: service_completed_successfully
       kami:
         condition: service_healthy
+
     logging:
       driver: loki
       options:
