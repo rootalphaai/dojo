@@ -137,15 +137,6 @@ class Validator(aobject):
         )
 
         await self.check_registered()
-
-        # Run score migration before loading state
-        migration_success = await ScoreStorage.migrate_from_db()
-        if not migration_success:
-            logger.error(
-                "Score migration failed - cannot continue without valid scores"
-            )
-            raise RuntimeError("Score migration failed - validator cannot start")
-
         await self.load_state()
 
     async def send_scores(self, synapse: ScoringResult, hotkeys: List[str]):
