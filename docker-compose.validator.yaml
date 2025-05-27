@@ -8,7 +8,6 @@ volumes:
   prisma-pip-cache:
   prisma-binary:
   prisma-client:
-  scores:
 
 networks:
   dojo-validator:
@@ -102,11 +101,11 @@ services:
       - .env
     volumes:
       - ./.env:/app/.env
+      - ./scores:/app/scores
       - $BITTENSOR_DIR:/root/.bittensor
       - prisma-binary:/root/prisma-python
       - prisma-pip-cache:/root/.cache/pip
       - prisma-client:/app/database/prisma
-      - scores:/app/scores
     command: ["validator"]
     networks:
       - dojo-validator
