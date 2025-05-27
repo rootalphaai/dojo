@@ -8,6 +8,7 @@ volumes:
   prisma-pip-cache:
   prisma-binary:
   prisma-client:
+  scores:
 
 networks:
   dojo-validator:
