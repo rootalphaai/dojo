@@ -511,16 +511,22 @@ class Miner(aobject):
 
     async def block_updater(self):
         while True:
-            block = await self.kami.get_current_block()
-            if block and block != self.block:
-                self._last_block = block
-                logger.debug(f"Updated block to {self._last_block}")
+            try:
+                block = await self.kami.get_current_block()
+                if block and block != self.block:
+                    self._last_block = block
+                    logger.debug(f"Updated block to {self._last_block}")
 
-            if os.getenv("FAST_MODE"):
-                continue
+                if os.getenv("FAST_MODE"):
+                    continue
 
-            logger.info(
-                f"Updated block to {self._last_block}"
-            )  # log new block if non fast_mode
+                logger.info(
+                    f"Updated block to {self._last_block}"
+                )  # log new block if non fast_mode
 
-            await asyncio.sleep(12)
+                await asyncio.sleep(12)
+            except Exception as e:
+                logger.error(
+                    f"Error updating block... Waiting for kami to reset. Error: {e}"
+                )
+                await asyncio.sleep(5)

@@ -428,9 +428,9 @@ class Validator(aobject):
             _terminal_plot(
                 f"scores before update, block: {self.block}", self.scores.numpy()
             )
-            assert (
-                existing_scores.shape == rewards.shape
-            ), "Scores and rewards must be the same length when calculating moving average"
+            assert existing_scores.shape == rewards.shape, (
+                "Scores and rewards must be the same length when calculating moving average"
+            )
 
             self.scores = alpha * rewards + (1 - alpha) * existing_scores
             self.scores = torch.clamp(self.scores, min=0.0)
@@ -1533,19 +1533,25 @@ class Validator(aobject):
 
     async def block_updater(self):
         while True:
-            block = await self.kami.get_current_block()
-            if block and block != self.block:
-                self._last_block = block
-                logger.debug(f"Updated block to {self._last_block}")
+            try:
+                block = await self.kami.get_current_block()
+                if block and block != self.block:
+                    self._last_block = block
+                    logger.debug(f"Updated block to {self._last_block}")
 
-            if os.getenv("FAST_MODE"):
-                continue
+                if os.getenv("FAST_MODE"):
+                    continue
 
-            logger.info(
-                f"Updated block to {self._last_block}"
-            )  # log new block if non fast_mode
+                logger.info(
+                    f"Updated block to {self._last_block}"
+                )  # log new block if non fast_mode
 
-            await asyncio.sleep(12)
+                await asyncio.sleep(12)
+            except Exception as e:
+                logger.error(
+                    f"Error updating block... Waiting for kami to reset. Error: {e}"
+                )
+                await asyncio.sleep(5)
 
     async def _extract_miners_hotkey_uid(
         self, batch: list[TaskSynapseObject], metagraph: SubnetMetagraph
