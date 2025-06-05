@@ -1,3 +1,11 @@
+## [1.12.4](https://github.com/tensorplex-labs/dojo/compare/v1.12.3...v1.12.4) (2025-06-05)
+
+### Bug Fixes
+
+* added for miner component as well. ([c66466b](https://github.com/tensorplex-labs/dojo/commit/c66466bdf168ddbd3269e0fb05fa52dbe18b6340))
+* block updater process error handling ([b5a6a11](https://github.com/tensorplex-labs/dojo/commit/b5a6a116fe3fc677626d9eee8f0b40f645c32fc6))
+* block updater will not exit the top-level process upon kami error when subtensor is disconected. ([6e615be](https://github.com/tensorplex-labs/dojo/commit/6e615bedef855f6a7b119aad826a783f70fce8c4))
+
 ## [1.12.3](https://github.com/tensorplex-labs/dojo/compare/v1.12.2...v1.12.3) (2025-05-27)
 
 ### Bug Fixes
