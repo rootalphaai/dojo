@@ -45,6 +45,7 @@ class Kami:
         Close the aiohttp session.
         """
         if self.session is not None:
+            self.session = None
             await self.session.close()
 
     async def get(
@@ -72,12 +73,15 @@ class Kami:
         except aiohttp.ClientError as e:
             message = f"Error connecting to Kami API: {e}"
             logger.error(message)
+            await self.close()
             raise RuntimeError(f"Error connecting to Kami API: {e}")
         except json.decoder.JSONDecodeError as e:
             logger.error(f"Error decoding JSON response: {e}")
+            await self.close()
             raise e
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
+            await self.close()
             raise e
 
     async def post(
@@ -105,12 +109,15 @@ class Kami:
         except aiohttp.ClientError as e:
             message = f"Error connecting to Kami API: {e}"
             logger.error(message)
+            await self.close()
             raise RuntimeError(message)
         except json.decoder.JSONDecodeError as e:
             logger.error(f"Error decoding JSON response: {e}")
+            await self.close()
             raise e
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
+            await self.close()
             raise e
 
     async def get_metagraph(self, netuid: int) -> SubnetMetagraph:
@@ -123,9 +130,14 @@ class Kami:
         Returns:
             SubnetMetagraph: The subnet metagraph object.
         """
-        get_metagraph = await self.get(f"chain/subnet-metagraph/{netuid}")
-        metagraph = get_metagraph.get("data", {})
-        return SubnetMetagraph.model_validate(metagraph)
+        try:
+            get_metagraph = await self.get(f"chain/subnet-metagraph/{netuid}")
+            metagraph = get_metagraph.get("data", {})
+            return SubnetMetagraph.model_validate(metagraph)
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
 
     async def get_hotkeys(self, netuid: int) -> list[str]:
         """
@@ -137,8 +149,13 @@ class Kami:
         Returns:
             list[str]: The list of hotkeys for the given netuid.
         """
-        metagraph = await self.get_metagraph(netuid)
-        return metagraph.hotkeys
+        try:
+            metagraph = await self.get_metagraph(netuid)
+            return metagraph.hotkeys
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
 
     async def get_axons(self, netuid: int) -> list[AxonInfo]:
         """
@@ -150,13 +167,18 @@ class Kami:
         Returns:
             list[AxonInfo]: The list of axons for the given netuid.
         """
-        get_metagraph = await self.get(f"chain/subnet-metagraph/{netuid}")
-        metagraph = get_metagraph.get("data", {})
-        axons = metagraph.get("axons", [])
-        if len(axons) == 0:
-            logger.warning("No axons found in metagraph response.")
+        try:
+            get_metagraph = await self.get(f"chain/subnet-metagraph/{netuid}")
+            metagraph = get_metagraph.get("data", {})
+            axons = metagraph.get("axons", [])
+            if len(axons) == 0:
+                logger.warning("No axons found in metagraph response.")
 
-        return [AxonInfo.model_validate(axon) for axon in axons]
+            return [AxonInfo.model_validate(axon) for axon in axons]
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
 
     async def get_current_block(self) -> int:
         """
@@ -165,9 +187,14 @@ class Kami:
                 Returns:
                     int: The current finalized block number.
         """
-        result = await self.get("chain/latest-block")
-        latest_block = result.get("data", {}).get("blockNumber", "")
-        return int(latest_block)
+        try:
+            result = await self.get("chain/latest-block")
+            latest_block = result.get("data", {}).get("blockNumber", "")
+            return int(latest_block)
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
 
     async def get_subnet_hyperparameters(self, netuid: int) -> SubnetHyperparameters:
         """
@@ -179,9 +206,14 @@ class Kami:
         Returns:
             SubnetHyperparameters: The subnet hyperparameters object.
         """
-        result = await self.get(f"chain/subnet-hyperparameters/{netuid}")
-        hyperparameters = result.get("data", {})
-        return SubnetHyperparameters.model_validate(hyperparameters)
+        try:
+            result = await self.get(f"chain/subnet-hyperparameters/{netuid}")
+            hyperparameters = result.get("data", {})
+            return SubnetHyperparameters.model_validate(hyperparameters)
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
 
     async def is_hotkey_registered(
         self, netuid: int, hotkey: str, block: int | None = None
@@ -197,16 +229,21 @@ class Kami:
         Returns:
             bool: True if the hotkey is registered, False otherwise.
         """
-        result = dict[str, bool]()
-        if block is None:
-            result = await self.get(
-                f"chain/check-hotkey?netuid={netuid}&hotkey={hotkey}"
-            )
-        else:
-            result = await self.get(
-                f"chain/check-hotkey?netuid={netuid}&hotkey={hotkey}&block={block}"
-            )
-        return result.get("data", {}).get("isHotkeyValid", False)
+        try:
+            result = dict[str, bool]()
+            if block is None:
+                result = await self.get(
+                    f"chain/check-hotkey?netuid={netuid}&hotkey={hotkey}"
+                )
+            else:
+                result = await self.get(
+                    f"chain/check-hotkey?netuid={netuid}&hotkey={hotkey}&block={block}"
+                )
+            return result.get("data", {}).get("isHotkeyValid", False)
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
 
     async def serve_axon(self, payload: ServeAxonPayload) -> Dict[str, Any]:
         """
@@ -218,7 +255,12 @@ class Kami:
         Returns:
             Dict[str, Any]: The JSON response from the API.
         """
-        return await self.post("chain/serve-axon", data=payload.model_dump())
+        try:
+            return await self.post("chain/serve-axon", data=payload.model_dump())
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
 
     async def set_weights(self, payload: SetWeightsPayload) -> Dict[str, Any]:
         """
@@ -233,47 +275,52 @@ class Kami:
         Returns:
             Dict[str, Any]: The JSON response from the API.
         """
-        get_hpams = await self.get_subnet_hyperparameters(payload.netuid)
-        if get_hpams.commitRevealWeightsEnabled:
-            tempo = get_hpams.tempo
-            reveal_period = get_hpams.commitRevealPeriod
-            if tempo == 0 or reveal_period == 0:
-                raise ValueError(
-                    "Tempo and reveal round must be greater than 0 for commit reveal weights."
+        try:
+            get_hpams = await self.get_subnet_hyperparameters(payload.netuid)
+            if get_hpams.commitRevealWeightsEnabled:
+                tempo = get_hpams.tempo
+                reveal_period = get_hpams.commitRevealPeriod
+                if tempo == 0 or reveal_period == 0:
+                    raise ValueError(
+                        "Tempo and reveal round must be greater than 0 for commit reveal weights."
+                    )
+
+                print(
+                    f"Commit reveal weights enabled: tempo: {tempo}, reveal_period: {reveal_period}"
                 )
 
-            print(
-                f"Commit reveal weights enabled: tempo: {tempo}, reveal_period: {reveal_period}"
-            )
-
-            # Encrypt `commit_hash` with t-lock and `get reveal_round`
-            commit_for_reveal, reveal_round = get_encrypted_commit(  # type: ignore
-                uids=payload.dests,
-                weights=payload.weights,
-                version_key=payload.version_key,
-                tempo=tempo,
-                current_block=await self.get_current_block(),
-                netuid=payload.netuid,
-                subnet_reveal_period_epochs=reveal_period,
-            )
-
-            print(f"Commit for reveal: {commit_for_reveal.hex()}")  # type: ignore
-            print(f"Reveal round: {reveal_round}")
-
-            if not commit_for_reveal or not reveal_round:
-                raise ValueError(
-                    "Failed to generate commit for reveal. Ensure that tempo and reveal round are set correctly."
+                # Encrypt `commit_hash` with t-lock and `get reveal_round`
+                commit_for_reveal, reveal_round = get_encrypted_commit(  # type: ignore
+                    uids=payload.dests,
+                    weights=payload.weights,
+                    version_key=payload.version_key,
+                    tempo=tempo,
+                    current_block=await self.get_current_block(),
+                    netuid=payload.netuid,
+                    subnet_reveal_period_epochs=reveal_period,
                 )
 
-            hex_commit: str = commit_for_reveal.hex()  # type: ignore
-            cr_payload: CommitRevealPayload = CommitRevealPayload(
-                netuid=payload.netuid,
-                commit=hex_commit,
-                revealRound=reveal_round,
-            )
+                print(f"Commit for reveal: {commit_for_reveal.hex()}")  # type: ignore
+                print(f"Reveal round: {reveal_round}")
 
-            return await self.post(
-                "chain/set-commit-reveal-weights",
-                data=cr_payload.model_dump(),  # type: ignore TODO: Fix type ignore
-            )
-        return await self.post("chain/set-weights", data=payload.model_dump())  # type: ignore TODO: Fix type ignore
+                if not commit_for_reveal or not reveal_round:
+                    raise ValueError(
+                        "Failed to generate commit for reveal. Ensure that tempo and reveal round are set correctly."
+                    )
+
+                hex_commit: str = commit_for_reveal.hex()  # type: ignore
+                cr_payload: CommitRevealPayload = CommitRevealPayload(
+                    netuid=payload.netuid,
+                    commit=hex_commit,
+                    revealRound=reveal_round,
+                )
+
+                return await self.post(
+                    "chain/set-commit-reveal-weights",
+                    data=cr_payload.model_dump(),  # type: ignore TODO: Fix type ignore
+                )
+            return await self.post("chain/set-weights", data=payload.model_dump())  # type: ignore TODO: Fix type ignore
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.close()
+            raise e
