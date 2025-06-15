@@ -59,7 +59,8 @@ dependencies = [
   "aioboto3==13.4.0",
   "aiofiles==24.1.0",
   "python-multipart==0.0.20",
-  "async-lru==2.0.5"
+  "async-lru==2.0.5",
+  "kami-client==1.1.2"
 ]
 
 [project.optional-dependencies]

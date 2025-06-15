@@ -7,6 +7,7 @@ from typing import Dict, Tuple
 
 import bittensor
 from bittensor.utils.networking import ip_to_int, ip_version
+from kami import AxonInfo, KamiClient, ServeAxonPayload, SubnetMetagraph
 from loguru import logger
 
 from commons.human_feedback.dojo import DojoAPI
@@ -14,7 +15,6 @@ from commons.objects import ObjectManager
 from commons.utils import aget_effective_stake, aobject, get_epoch_time
 from dojo import MINER_STATUS, VALIDATOR_MIN_STAKE
 from dojo.chain import parse_block_headers
-from dojo.kami import AxonInfo, Kami, ServeAxonPayload, SubnetMetagraph
 from dojo.protocol import (
     Heartbeat,
     ScoringResult,
@@ -27,14 +27,14 @@ from dojo.utils.config import get_config
 
 class Miner(aobject):
     _should_exit: bool = False
-    kami: Kami
+    kami: KamiClient
 
     async def __init__(self):
         self._last_block = None
         self.config = ObjectManager.get_config()
         logger.info(self.config)
 
-        self.kami = Kami()
+        self.kami = KamiClient()
         logger.info(f"Connecting to kami: {self.kami.url}")
 
         logger.info("Setting up bittensor objects....")
