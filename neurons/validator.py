@@ -14,6 +14,7 @@ import aiohttp
 import bittensor as bt
 import numpy as np
 import torch
+from kami import KamiClient, SetWeightsPayload, SubnetMetagraph
 from loguru import logger
 from torch.nn import functional as F
 
@@ -43,7 +44,6 @@ from commons.utils import (
 )
 from database.client import connect_db
 from dojo import get_latest_git_tag, get_latest_remote_tag, get_spec_version
-from dojo.kami import Kami, SetWeightsPayload, SubnetMetagraph
 from dojo.protocol import (
     CompletionResponse,
     CriteriaType,
@@ -95,7 +95,7 @@ class Validator(aobject):
     wallet: bt.wallet  # type: ignore
     metagraph: SubnetMetagraph
     spec_version: int = get_spec_version()
-    kami: Kami
+    kami: KamiClient
 
     async def __init__(self):
         await connect_db()
@@ -106,7 +106,7 @@ class Validator(aobject):
         self._block_check_attempts = 0
         self._connection_lock = asyncio.Lock()
 
-        self.kami = Kami()
+        self.kami = KamiClient()
 
         self.loop = asyncio.get_event_loop()
         self.config = ObjectManager.get_config()
@@ -428,9 +428,9 @@ class Validator(aobject):
             _terminal_plot(
                 f"scores before update, block: {self.block}", self.scores.numpy()
             )
-            assert existing_scores.shape == rewards.shape, (
-                "Scores and rewards must be the same length when calculating moving average"
-            )
+            assert (
+                existing_scores.shape == rewards.shape
+            ), "Scores and rewards must be the same length when calculating moving average"
 
             self.scores = alpha * rewards + (1 - alpha) * existing_scores
             self.scores = torch.clamp(self.scores, min=0.0)
